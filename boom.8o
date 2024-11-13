@@ -1,0 +1,297 @@
+# Boom - A Kaboom clone for the CHIP-8
+# Written by Bryce Vandegrift
+
+:const BOMBER_HEIGHT 12
+:const BOMB_HEIGHT 4
+
+:alias paddlex v4
+:alias paddle_num v5
+:alias bomberx v6
+:alias bomb1x v7
+:alias bomb1y v8
+:alias bomb2x v9
+:alias bomb2y va
+:alias bomb3x vb
+:alias bomb3y vc
+:alias active_bombs vd
+:alias bomb_cycles ve
+
+:macro SYNC N {
+	loop
+		v0 := delay
+		if v0 != 0 then
+	again
+
+	v0 := N
+	delay := v0
+}
+
+: paddle1
+	0b11111100
+
+: paddle2
+	0b11111100
+	0b00000000
+	0b11111100
+
+: paddle3
+	0b11111100
+	0b00000000
+	0b11111100
+	0b00000000
+	0b11111100
+
+: bomber
+	0x3C
+	0x42
+	0xA5
+	0x81
+	0x5A
+	0x24
+	0x7E
+	0xFF
+	0x99
+	0x99
+	0x99
+	0x42
+
+: bomb
+	0b01100000
+	0b11110000
+	0b11110000
+	0b01100000
+
+: draw_paddle
+	if paddle_num == 3 begin
+		i := paddle3
+		v0 := 26
+		sprite paddlex v0 5
+	end
+
+	if paddle_num == 2 begin
+		i := paddle2
+		v0 := 28
+		sprite paddlex v0 3
+	end
+
+	if paddle_num == 1 begin
+		i := paddle1
+		v0 := 30
+		sprite paddlex v0 1
+	end
+;
+
+: draw_bomber
+	i := bomber
+	v0 := 0
+	sprite bomberx v0 BOMBER_HEIGHT
+;
+
+: draw_bomb1
+	i := bomb
+	sprite bomb1x bomb1y 4
+;
+
+: draw_bomb2
+	i := bomb
+	sprite bomb2x bomb2y 4
+;
+
+: draw_bomb3
+	i := bomb
+	sprite bomb3x bomb3y 4
+;
+
+: paddle_left
+	draw_paddle
+	paddlex -= 1
+	draw_paddle
+;
+
+: paddle_right
+	draw_paddle
+	paddlex += 1
+	draw_paddle
+;
+
+: move_bomber
+	draw_bomber
+
+	v0 := random 0xff
+	if v0 < 128 begin
+		if bomberx >= 2 then bomberx -= 2
+	else
+		if bomberx <= 56 then bomberx += 2
+	end
+
+	draw_bomber
+;
+
+: remove_paddle
+	if paddle_num == 3 begin
+		i := paddle1
+		v0 := 26
+		sprite paddlex v0 1
+	end
+
+	if paddle_num == 2 begin
+		i := paddle1
+		v0 := 28
+		sprite paddlex v0 1
+	end
+
+	if paddle_num == 1 begin
+		i := paddle1
+		v0 := 30
+		sprite paddlex v0 1
+	end
+
+	paddle_num -= 1
+;
+
+: move_bombs
+	if active_bombs == 0b00000000 then return
+
+	:calc BOMB_DIST { 32 - BOMB_HEIGHT }
+
+	v0 := 0b00000001
+	v0 &= active_bombs
+	if v0 == 0b00000001 begin
+		draw_bomb1
+
+		if bomb1y == BOMB_DIST begin
+			v1 := 0b00000001
+			active_bombs ^= v1
+			remove_paddle
+			jump next1
+		end
+		bomb1y += 1
+
+		draw_bomb1
+		if vf != 0 begin
+			v1 := 0b00000001
+			active_bombs ^= v1
+			draw_bomb1
+		end
+	end
+: next1
+
+	v0 := 0b00000010
+	v0 &= active_bombs
+	if v0 == 0b00000010 begin
+		draw_bomb2
+
+		if bomb2y == BOMB_DIST begin
+			v1 := 0b00000010
+			active_bombs ^= v1
+			remove_paddle
+			jump next2
+		end
+		bomb2y += 1
+
+		draw_bomb2
+		if vf != 0 begin
+			v1 := 0b00000010
+			active_bombs ^= v1
+			draw_bomb2
+		end
+	end
+: next2
+
+	v0 := 0b00000100
+	v0 &= active_bombs
+	if v0 == 0b00000100 begin
+		draw_bomb3
+
+		bomb3y += 1
+		if bomb3y == BOMB_DIST begin
+			v1 := 0b00000100
+			active_bombs ^= v1
+			remove_paddle
+			return
+		end
+
+		draw_bomb3
+		if vf != 0 begin
+			v1 := 0b00000100
+			active_bombs ^= v1
+			draw_bomb3
+		end
+	end
+;
+
+: drop_bombs
+	if active_bombs == 0b00000111 then return
+
+	v0 := 0b00000001
+	v0 &= active_bombs
+	if v0 == 0b00000000 begin
+		bomb1x := bomberx
+		bomb1y := BOMBER_HEIGHT
+		v1 := 0b00000001
+		active_bombs ^= v1
+		draw_bomb1
+		return
+	end
+
+	v0 := 0b00000010
+	v0 &= active_bombs
+	if v0 == 0b00000000 begin
+		bomb2x := bomberx
+		bomb2y := BOMBER_HEIGHT
+		v1 := 0b00000010
+		active_bombs ^= v1
+		draw_bomb2
+		return
+	end
+
+	v0 := 0b00000100
+	v0 &= active_bombs
+	if v0 == 0b00000000 begin
+		bomb3x := bomberx
+		bomb3y := BOMBER_HEIGHT
+		v1 := 0b00000100
+		active_bombs ^= v1
+		draw_bomb3
+		return
+	end
+;
+
+: gameover
+	loop
+	again
+;
+
+: reset
+	paddlex := 26
+	paddle_num := 3
+	bomberx := 25
+	active_bombs := 0b00000000
+	bomb_cycles := 0
+
+	draw_paddle
+	draw_bomber
+;
+
+: main
+	reset
+	SYNC 64
+
+	loop
+		v0 := OCTO_KEY_A
+		if v0 key then paddle_left
+		v0 := OCTO_KEY_D
+		if v0 key then paddle_right
+
+		move_bomber
+		move_bombs
+		if bomb_cycles == 8 begin
+			drop_bombs
+			bomb_cycles := 0
+		end
+		bomb_cycles += 1
+
+		if paddle_num == 0 then gameover
+
+		SYNC 1
+	again
