@@ -3,6 +3,8 @@
 
 :const BOMBER_HEIGHT 12
 :const BOMB_HEIGHT 4
+:const CHAR_WIDTH 6
+:const CHAR_HEIGHT 8
 
 :alias paddlex v4
 :alias paddle_num v5
@@ -25,6 +27,76 @@
 	v0 := N
 	delay := v0
 }
+
+:macro DRAW_PADDLE {
+	if paddle_num == 3 begin
+		i := paddle3
+		v0 := 26
+		sprite paddlex v0 5
+	end
+
+	if paddle_num == 2 begin
+		i := paddle2
+		v0 := 28
+		sprite paddlex v0 3
+	end
+
+	if paddle_num == 1 begin
+		i := paddle1
+		v0 := 30
+		sprite paddlex v0 1
+	end
+}
+
+:macro DRAW_BOMBER {
+	i := bomber
+	v0 := 0
+	sprite bomberx v0 BOMBER_HEIGHT
+}
+
+:macro DRAW_BOMB1 {
+	i := bomb
+	sprite bomb1x bomb1y 4
+}
+
+:macro DRAW_BOMB2 {
+	i := bomb
+	sprite bomb2x bomb2y 4
+}
+
+:macro DRAW_BOMB3 {
+	i := bomb
+	sprite bomb3x bomb3y 4
+}
+
+:stringmode print "Bom!Pres'EtSaGOv" {
+	:calc addr { font + VALUE * 9 }
+	i := addr
+	sprite v0 v1 CHAR_HEIGHT
+	v0 += CHAR_WIDTH
+}
+
+:stringmode print " " {
+	v0 += CHAR_WIDTH
+}
+
+: font
+	0x00 0xF0 0x88 0x88 0xF0 0x88 0x88 0xF0 0x00 # B
+	0x00 0x00 0x00 0x70 0x88 0x88 0x88 0x70 0x00 # o
+	0x00 0x00 0x00 0xF0 0xA8 0xA8 0xA8 0xA8 0x00 # m
+	0x00 0x20 0x20 0x20 0x20 0x20 0x00 0x20 0x00 # !
+	0x00 0xF0 0x88 0x88 0xF0 0x80 0x80 0x80 0x00 # P
+	0x00 0x00 0x00 0xB0 0xC8 0x80 0x80 0x80 0x00 # r
+	0x00 0x00 0x00 0x70 0x88 0xF8 0x80 0x78 0x00 # e
+	0x00 0x00 0x00 0x78 0x80 0x70 0x08 0xF0 0x00 # s
+	0x20 0x20 0x20 0x00 0x00 0x00 0x00 0x00 0x00 # '
+	0x00 0xF8 0x80 0x80 0xF0 0x80 0x80 0xF8 0x00 # E
+	0x00 0x20 0x20 0x78 0x20 0x20 0x20 0x18 0x00 # t
+	0x00 0x70 0x88 0x80 0x70 0x08 0x88 0x70 0x00 # S
+	0x00 0x00 0x00 0x78 0x88 0x88 0x98 0x68 0x00 # a
+	0x00 0x70 0x88 0x80 0x98 0x88 0x88 0x70 0x00 # G
+	0x00 0x70 0x88 0x88 0x88 0x88 0x88 0x70 0x00 # O
+	0x00 0x00 0x00 0x88 0x88 0x50 0x50 0x20 0x00 # v
 
 : paddle1
 	0b11111100
@@ -61,61 +133,20 @@
 	0b11110000
 	0b01100000
 
-: draw_paddle
-	if paddle_num == 3 begin
-		i := paddle3
-		v0 := 26
-		sprite paddlex v0 5
-	end
-
-	if paddle_num == 2 begin
-		i := paddle2
-		v0 := 28
-		sprite paddlex v0 3
-	end
-
-	if paddle_num == 1 begin
-		i := paddle1
-		v0 := 30
-		sprite paddlex v0 1
-	end
-;
-
-: draw_bomber
-	i := bomber
-	v0 := 0
-	sprite bomberx v0 BOMBER_HEIGHT
-;
-
-: draw_bomb1
-	i := bomb
-	sprite bomb1x bomb1y 4
-;
-
-: draw_bomb2
-	i := bomb
-	sprite bomb2x bomb2y 4
-;
-
-: draw_bomb3
-	i := bomb
-	sprite bomb3x bomb3y 4
-;
-
 : paddle_left
-	draw_paddle
+	DRAW_PADDLE
 	paddlex -= 1
-	draw_paddle
+	DRAW_PADDLE
 ;
 
 : paddle_right
-	draw_paddle
+	DRAW_PADDLE
 	paddlex += 1
-	draw_paddle
+	DRAW_PADDLE
 ;
 
 : move_bomber
-	draw_bomber
+	DRAW_BOMBER
 
 	v0 := random 0xff
 	if v0 < 128 begin
@@ -124,7 +155,7 @@
 		if bomberx <= 56 then bomberx += 2
 	end
 
-	draw_bomber
+	DRAW_BOMBER
 ;
 
 : remove_paddle
@@ -157,7 +188,7 @@
 	v0 := 0b00000001
 	v0 &= active_bombs
 	if v0 == 0b00000001 begin
-		draw_bomb1
+		DRAW_BOMB1
 
 		if bomb1y == BOMB_DIST begin
 			v1 := 0b00000001
@@ -167,11 +198,11 @@
 		end
 		bomb1y += 1
 
-		draw_bomb1
+		DRAW_BOMB1
 		if vf != 0 begin
 			v1 := 0b00000001
 			active_bombs ^= v1
-			draw_bomb1
+			DRAW_BOMB1
 		end
 	end
 : next1
@@ -179,7 +210,7 @@
 	v0 := 0b00000010
 	v0 &= active_bombs
 	if v0 == 0b00000010 begin
-		draw_bomb2
+		DRAW_BOMB2
 
 		if bomb2y == BOMB_DIST begin
 			v1 := 0b00000010
@@ -189,11 +220,11 @@
 		end
 		bomb2y += 1
 
-		draw_bomb2
+		DRAW_BOMB2
 		if vf != 0 begin
 			v1 := 0b00000010
 			active_bombs ^= v1
-			draw_bomb2
+			DRAW_BOMB2
 		end
 	end
 : next2
@@ -201,7 +232,7 @@
 	v0 := 0b00000100
 	v0 &= active_bombs
 	if v0 == 0b00000100 begin
-		draw_bomb3
+		DRAW_BOMB3
 
 		bomb3y += 1
 		if bomb3y == BOMB_DIST begin
@@ -211,11 +242,11 @@
 			return
 		end
 
-		draw_bomb3
+		DRAW_BOMB3
 		if vf != 0 begin
 			v1 := 0b00000100
 			active_bombs ^= v1
-			draw_bomb3
+			DRAW_BOMB3
 		end
 	end
 ;
@@ -230,7 +261,7 @@
 		bomb1y := BOMBER_HEIGHT
 		v1 := 0b00000001
 		active_bombs ^= v1
-		draw_bomb1
+		DRAW_BOMB1
 		return
 	end
 
@@ -241,7 +272,7 @@
 		bomb2y := BOMBER_HEIGHT
 		v1 := 0b00000010
 		active_bombs ^= v1
-		draw_bomb2
+		DRAW_BOMB2
 		return
 	end
 
@@ -252,28 +283,59 @@
 		bomb3y := BOMBER_HEIGHT
 		v1 := 0b00000100
 		active_bombs ^= v1
-		draw_bomb3
+		DRAW_BOMB3
 		return
 	end
 ;
 
 : gameover
+	clear
+
+	v0 := 4
+	v1 := 11
+	print "Game Over!"
+
 	loop
+		v0 := OCTO_KEY_E
+		if v0 key then jump try_again
+	again
+;
+
+: title
+	clear
+
+	v0 := 16
+	v1 := 0
+	print "Boom!"
+	v0 := 6
+	v1 := 11
+	print "Press 'E'"
+	v0 := 6
+	v1 := 21
+	print "to Start"
+
+	loop
+		v0 := OCTO_KEY_E
+		if v0 key then return
 	again
 ;
 
 : reset
+	clear
+
 	paddlex := 26
 	paddle_num := 3
 	bomberx := 25
 	active_bombs := 0b00000000
 	bomb_cycles := 0
 
-	draw_paddle
-	draw_bomber
+	DRAW_PADDLE
+	DRAW_BOMBER
 ;
 
 : main
+	title
+: try_again
 	reset
 	SYNC 64
 
