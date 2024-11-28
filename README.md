@@ -2,7 +2,7 @@
 
 A Kaboom clone for the CHIP-8
 
-![image.png](Screenshot of Boom)
+![Screenshot of Boom](image.png)
 
 ## About
 
@@ -23,7 +23,7 @@ Press `E` to start/restart the game
 In order to run this you will need a CHIP-8 emulator/virtual machine, I just
 happen to have written one [here](https://git.sr.ht/~bpv/c8).
 Just supply your emulator of choice with the given `.c8` file (you can find the
-game [here](boom.c8).
+game [here](boom.c8)).
 You may want to run this game at a higher speed than normal if it is too slow
 for you.
 
